@@ -1,0 +1,46 @@
+trigger:
+- ci
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+        steps:
+          - task: DotNetCoreCLI@2
+            inputs:
+              command: 'build'
+              projects: 'src/SampleProject.API/SampleProject.API.csproj'
+
+  - stage: DeployToTest
+    jobs:
+      - job: DeployToTest
+        steps:
+          - task: DotNetCoreCLI@2
+            displayName: Publish project
+            inputs:
+              command: 'publish'
+              publishWebProjects: true
+              arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+
+
+          - task: AzureRmWebAppDeployment@4
+            inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: 'Azure subscription 1(a630b163-559f-468b-bbb3-a9d9f79197b2)'
+              appType: 'webApp'
+              WebAppName: 'webapp-devops24-henrik-test'
+              packageForLinux: '$(Pipeline.Workspace)/**/*.zip'
+              enableCustomDeployment: true
+              DeploymentType: 'zipDeploy'
