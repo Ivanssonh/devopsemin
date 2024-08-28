@@ -11,7 +11,7 @@ steps:
     buildType: 'current'
     downloadType: 'single'
     artifactName: 'drop'
-    downloadPath: '$(Pipeline.Workspace)/drop'
+    downloadPath: '$(Pipeline.Workspace)'
 
 - task: AzureRmWebAppDeployment@4
   inputs:
