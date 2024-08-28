@@ -4,7 +4,7 @@ parameters:
   default: 'Release'
 - name: projectFile
   type: string
-- name: displayname
+- name: displayName
   type: string
   default: 'build-publish'
   
