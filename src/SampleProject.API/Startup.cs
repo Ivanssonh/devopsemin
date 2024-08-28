@@ -86,6 +86,7 @@ namespace SampleProject.API
             }
 
 
+
             var memoryCache = serviceProvider.GetService<IMemoryCache>();
             return ApplicationStartup.Initialize(
                 services, 
