@@ -4,6 +4,10 @@ parameters:
   default: 'Release'
 - name: projectFile
   type: string
+- name: displayname
+  type: string
+  default: 'build-publish'
+  
 
 steps:
   - task: DotNetCoreCLI@2
