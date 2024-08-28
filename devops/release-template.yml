@@ -6,18 +6,12 @@ parameters:
   default: 'Release'
 
 steps:
-- task: DotNetCoreCLI@2
-  displayName: Publish project
+- task: DownloadBuildArtifacts@0
   inputs:
-    command: 'publish'
-    publishWebProjects: true
-    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
+    buildType: 'current'
+    downloadType: 'single'
+    artifactName: 'drop'
+    downloadPath: '$(Pipeline.Workspace)/drop'
 
 - task: AzureRmWebAppDeployment@4
   inputs:

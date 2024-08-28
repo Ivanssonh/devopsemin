@@ -10,14 +10,13 @@ variables:
 
 stages:
   - stage: Build
-    displayName: 'Build project'
     jobs:
       - job: Build
         steps:
-          - task: DotNetCoreCLI@2
-            inputs:
-              command: 'build'
-              projects: 'src/SampleProject.API/SampleProject.API.csproj'
+          - template: devops/build-publish-template.yml
+            parameters:
+              projectFile: 'src/SampleProject.API/SampleProject.API.csproj'
+              displayName: 'BuildFromTemplate'
 
   - stage: DeployToTest
     displayName: 'Deploy to test'
