@@ -12,6 +12,6 @@ steps:
     azureSubscription: 'Azure subscription 1(a630b163-559f-468b-bbb3-a9d9f79197b2)'
     appType: 'webApp'
     WebAppName: ${{ parameters.WebbAppName }}
-    packageForLinux: '$(Pipeline.Workspace)/**/*.zip'
+    packageForLinux: '$(Pipeline.Workspace)/**/drop.zip'
     enableCustomDeployment: true
     DeploymentType: 'zipDeploy'
