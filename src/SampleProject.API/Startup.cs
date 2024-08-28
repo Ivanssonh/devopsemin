@@ -43,6 +43,7 @@ namespace SampleProject.API
                 .AddEnvironmentVariables()
                 .Build();
         }
+         
 
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
@@ -84,7 +85,7 @@ namespace SampleProject.API
             KeyVaultSecret secret = client.GetSecret("FromAddressEmailSecret");
             _emailSettings.FromAddressEmail = secret.Value;
             }
-
+            
 
 
             var memoryCache = serviceProvider.GetService<IMemoryCache>();
