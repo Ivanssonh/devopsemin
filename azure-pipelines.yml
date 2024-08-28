@@ -1,5 +1,6 @@
 trigger:
-- ci
+- master
+- ft/*
 
 pool:
   vmImage: 'windows-latest'
@@ -9,6 +10,7 @@ variables:
 
 stages:
   - stage: Build
+    displayName: 'Build project'
     jobs:
       - job: Build
         steps:
@@ -18,6 +20,9 @@ stages:
               projects: 'src/SampleProject.API/SampleProject.API.csproj'
 
   - stage: DeployToTest
+    displayName: 'Deploy to test'
+    dependsOn: Build
+    condition: succeeded()
     jobs:
       - job: DeployToTest
         steps:
@@ -44,3 +49,38 @@ stages:
               packageForLinux: '$(Pipeline.Workspace)/**/*.zip'
               enableCustomDeployment: true
               DeploymentType: 'zipDeploy'
+
+
+  - stage: DeployToProd
+    displayName: 'Deploy to prod'
+    dependsOn: DeployToTest
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    jobs:
+      - job: DeployToProd
+        steps:
+          - task: DotNetCoreCLI@2
+            displayName: Publish project
+            inputs:
+              command: 'publish'
+              publishWebProjects: true
+              arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+
+
+          - task: AzureRmWebAppDeployment@4
+            inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: 'Azure subscription 1(a630b163-559f-468b-bbb3-a9d9f79197b2)'
+              appType: 'webApp'
+              WebAppName: 'webbapp-devops24-henrik-prod'
+              packageForLinux: '$(Pipeline.Workspace)/**/*.zip'
+              enableCustomDeployment: true
+              DeploymentType: 'zipDeploy'
+
+
+              
