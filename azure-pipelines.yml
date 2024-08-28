@@ -24,60 +24,19 @@ stages:
     dependsOn: Build
     condition: succeeded()
     jobs:
-      - job: DeployToTest
+      - job: DeployJob
         steps:
-          - task: DotNetCoreCLI@2
-            displayName: Publish project
-            inputs:
-              command: 'publish'
-              publishWebProjects: true
-              arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-
-          - task: PublishBuildArtifacts@1
-            inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-              ArtifactName: 'drop'
-              publishLocation: 'Container'
-
-
-          - task: AzureRmWebAppDeployment@4
-            inputs:
-              ConnectionType: 'AzureRM'
-              azureSubscription: 'Azure subscription 1(a630b163-559f-468b-bbb3-a9d9f79197b2)'
-              appType: 'webApp'
-              WebAppName: 'webapp-devops24-henrik-test'
-              packageForLinux: '$(Pipeline.Workspace)/**/*.zip'
-              enableCustomDeployment: true
-              DeploymentType: 'zipDeploy'
-
+          - template: devops/release-template.yml
+            parameters:
+              WebbAppName: 'webapp-devops24-henrik-test'
 
   - stage: DeployToProd
     displayName: 'Deploy to prod'
     dependsOn: DeployToTest
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
     jobs:
-      - job: DeployToProd
+      - job: DeployJob
         steps:
-          - task: DotNetCoreCLI@2
-            displayName: Publish project
-            inputs:
-              command: 'publish'
-              publishWebProjects: true
-              arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-
-          - task: PublishBuildArtifacts@1
-            inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-              ArtifactName: 'drop'
-              publishLocation: 'Container'
-
-          - task: AzureRmWebAppDeployment@4
-            inputs:
-              ConnectionType: 'AzureRM'
-              azureSubscription: 'Azure subscription 1(a630b163-559f-468b-bbb3-a9d9f79197b2)'
-              appType: 'webApp'
-              WebAppName: 'webbapp-devops24-henrik-prod'
-              packageForLinux: '$(Pipeline.Workspace)/**/*.zip'
-              enableCustomDeployment: true
-              DeploymentType: 'zipDeploy'
-              
+          - template: devops/release-template.yml
+            parameters:
+              WebbAppName: 'webbapp-devops24-henrik-prod'
