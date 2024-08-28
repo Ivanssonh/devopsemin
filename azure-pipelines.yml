@@ -71,16 +71,17 @@ stages:
               ArtifactName: 'drop'
               publishLocation: 'Container'
 
-
           - task: AzureRmWebAppDeployment@4
             inputs:
               ConnectionType: 'AzureRM'
               azureSubscription: 'Azure subscription 1(a630b163-559f-468b-bbb3-a9d9f79197b2)'
               appType: 'webApp'
               WebAppName: 'webbapp-devops24-henrik-prod'
-              packageForLinux: '$(Pipeline.Workspace)/**/*.zip'
+              deployToSlotOrASE: true
+              ResourceGroupName: 'rg-depvops24-henrik-prod'
+              SlotName: 'production'
+              packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
               enableCustomDeployment: true
               DeploymentType: 'zipDeploy'
-
 
               
