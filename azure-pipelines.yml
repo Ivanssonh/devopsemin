@@ -1,6 +1,6 @@
 trigger:
-- master
-- ft/*
+  - master
+  - ft/*
 
 pool:
   vmImage: 'windows-latest'
@@ -13,6 +13,7 @@ stages:
     jobs:
       - job: Build
         steps:
+          - checkout: self
           - template: devops/build-publish-template.yml
             parameters:
               projectFile: 'src/SampleProject.API/SampleProject.API.csproj'
@@ -22,26 +23,55 @@ stages:
     displayName: 'Deploy to test'
     dependsOn: Build
     condition: succeeded()
+    variables:
+      environmentName: 'test'
     jobs:
-      - job: DeployJob
+      - job: DeployTest
         steps:
+          - checkout: self
+          - task: AzureResourceManagerTemplateDeployment@3
+            inputs:
+              deploymentScope: 'Resource Group'
+              azureResourceManagerConnection: 'Azure subscription 1(a630b163-559f-468b-bbb3-a9d9f79197b2)'
+              action: 'Create Or Update Resource Group'
+              resourceGroupName: 'rg-devops24-ivansson-$(environmentName)'
+              location: 'West Europe'
+              templateLocation: 'Linked artifact'
+              csmFile: 'devops/deploy.bicep'
+              csmParametersFile: 'devops/parameters-$(environmentName).bicepparam'
+              deploymentMode: 'Incremental'
+              deploymentName: 'DevOps24-Test'
+              deploymentOutputs: 'bicepOutputs'
+              useWithoutJSON: true
           - template: devops/release-template.yml
             parameters:
-              WebbAppName: 'webapp-devops24-henrik-test'
+              WebbAppName: '$(bicepOutputs.appName.Value)'
 
   - stage: DeployToProd
     displayName: 'Deploy to prod'
     dependsOn: DeployToTest
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    variables:
+      environmentName: 'prod'
     jobs:
-      - deployment: DeployToProd
-        environment: Prod
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - checkout: self
-                - template: devops/release-template.yml
-                  parameters:
-                    WebbAppName: 'webbapp-devops24-henrik-prod'
+      - job: DeployInfrastructureProd
+        steps:
+          - checkout: self
+          - task: AzureResourceManagerTemplateDeployment@3
+            inputs:
+              deploymentScope: 'Resource Group'
+              azureResourceManagerConnection: 'Azure subscription 1(a630b163-559f-468b-bbb3-a9d9f79197b2)'
+              action: 'Create Or Update Resource Group'
+              resourceGroupName: 'rg-devops24-ivansson-$(environmentName)'
+              location: 'West Europe'
+              templateLocation: 'Linked artifact'
+              csmFile: 'devops/deploy.bicep'
+              csmParametersFile: 'devops/parameters-$(environmentName).bicepparam'
+              deploymentMode: 'Incremental'
+              deploymentName: 'DevOps24-Prod'
+              deploymentOutputs: 'bicepOutputs'
+              useWithoutJSON: true
 
+          - template: devops/release-template.yml
+            parameters:
+              WebbAppName: '$(bicepOutputs.appName.Value)'
