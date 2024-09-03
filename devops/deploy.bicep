@@ -16,7 +16,7 @@ var sqlAdminPassword = 'Bytmig123'
 var applicationInsightsName = functionAppName
 var workspaceName = 'log-${resourceSuffix}'
 var functionAppName = 'func-${resourceSuffix}'
-//var principalId = '6d2058c3-446d-4993-9592-1623bd657fa1'
+var principalId = '6d2058c3-446d-4993-9592-1623bd657fa1'
 //--------------------------------------------------------------------------------------------------
 //App Service Plan & Web App
 resource appServicePlanWeb 'Microsoft.Web/serverfarms@2023-12-01' = {
@@ -212,7 +212,7 @@ module KeyVaultModule 'keyvault.bicep' = {
   params:{
     keyVaultName: keyVaultName
     location:location
-    //principalId: principalId
+    principalId: principalId
     
   }
 }
