@@ -5,7 +5,7 @@ param skuNameST string
 
 var resourceSuffix = 'do24-${take(uniqueString(resourceGroup().id), 6)}-${environmentName}'
 var storageAccountName = 'stdevops24${uniqueString(resourceGroup().id)}'
-//var keyVaultName = 'kv-${resourceSuffix}'
+var keyVaultName = 'kv-${resourceSuffix}'
 var appServicePlanNameFunc = 'planFunc-${resourceSuffix}'
 var appServicePlanNameWeb = 'planWeb-${resourceSuffix}'
 var webAppName = 'webApp-${resourceSuffix}'
@@ -207,14 +207,14 @@ properties:{
 //Keyvault
 
 
-// module KeyVaultModule 'keyvault.bicep' = {
-//   name:'KeyVaultModule'
-//   params:{
-//     keyVaultName: keyVaultName
-//     location:location
-//     principalId: principalId
+module KeyVaultModule 'keyvault.bicep' = {
+  name:'KeyVaultModule'
+  params:{
+    keyVaultName: keyVaultName
+    location:location
+    //principalId: principalId
     
-//   }
-// }
+  }
+}
 
 output appName string = webAppName
