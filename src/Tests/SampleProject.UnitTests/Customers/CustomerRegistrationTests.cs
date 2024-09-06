@@ -1,15 +1,16 @@
 ﻿using NSubstitute;
-using NUnit.Framework;
 using SampleProject.Domain.Customers;
 using SampleProject.Domain.Customers.Rules;
+using SampleProject.Domain.SeedWork;
 using SampleProject.UnitTests.SeedWork;
+using Xunit;
 
 namespace SampleProject.UnitTests.Customers
 {
-    [TestFixture]
+    
     public class CustomerRegistrationTests : TestBase
     {
-        [Test]
+        [Fact]
         public void GivenCustomerEmailIsUnique_WhenCustomerIsRegistering_IsSuccessful()
         {
             // Arrange
@@ -24,7 +25,7 @@ namespace SampleProject.UnitTests.Customers
             AssertPublishedDomainEvent<CustomerRegisteredEvent>(customer);
         }
 
-        [Test]
+        [Fact]
         public void GivenCustomerEmailIsNotUnique_WhenCustomerIsRegistering_BreaksCustomerEmailMustBeUniqueRule()
         {
             // Arrange
@@ -39,5 +40,22 @@ namespace SampleProject.UnitTests.Customers
                 Customer.CreateRegistered(email, "Sample name", customerUniquenessChecker);
             });
         }
-    }
+
+
+        [Fact]
+        public void GivenCustomerEmailHasInvalidDomain_WhenCustomerIsRegistering_BreaksCustomerEmailMustHaveNackademinDomain()
+        {
+
+            // Arrange
+            var email = "testEmail@test.se";
+
+            // Act & Assert
+            AssertBrokenRule<CustomerEmailMustHaveValidDomainRule>(() =>
+            {
+                Customer.CreateRegistered(email, "Sample Name");
+            });
+        }
+
+    } 
+
 }

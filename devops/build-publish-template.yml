@@ -18,6 +18,11 @@ steps:
       arguments: '--configuration ${{ parameters.buildConfiguration }}'
 
   - task: DotNetCoreCLI@2
+    inputs:
+      command: 'test'
+      projects: 'src/Tests/SampleProject.UnitTests/SampleProject.UnitTests.csproj'
+
+  - task: DotNetCoreCLI@2
     displayName: 'Publish project'
     inputs:
       command: 'publish'

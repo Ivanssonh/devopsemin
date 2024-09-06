@@ -47,6 +47,12 @@ namespace SampleProject.Domain.Customers
 
             return new Customer(email, name);
         }
+        public static Customer CreateRegistered(string email, string name)
+        {
+            CheckRule(new CustomerEmailMustHaveValidDomainRule(email));
+
+            return new Customer(email, name);
+        }
 
         public OrderId PlaceOrder(
             List<OrderProductData> orderProductsData,
