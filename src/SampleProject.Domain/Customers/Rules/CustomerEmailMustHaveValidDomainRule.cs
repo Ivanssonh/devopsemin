@@ -10,12 +10,14 @@ namespace SampleProject.Domain.Customers.Rules
     public class CustomerEmailMustHaveValidDomainRule : IBusinessRule
     {
         private readonly string _email;
-        public CustomerEmailMustHaveValidDomainRule(string email)
+        private readonly IEmailDomainChecker _emailDomainChecker;
+        public CustomerEmailMustHaveValidDomainRule(IEmailDomainChecker emailDomainChecker,string email)
         {
             _email = email;
+            _emailDomainChecker = emailDomainChecker;
         }
 
-        public bool IsBroken() => !_email.EndsWith("nackademin.se");
+        public bool IsBroken() => !_emailDomainChecker.IsValidDomain(_email);
 
         public string Message => "You have to register an emailadress with domain 'nackademin.se";
 

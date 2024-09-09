@@ -47,9 +47,9 @@ namespace SampleProject.Domain.Customers
 
             return new Customer(email, name);
         }
-        public static Customer CreateRegistered(string email, string name)
+        public static Customer CreateRegistered(string email, string name, IEmailDomainChecker emailDomainChecker)
         {
-            CheckRule(new CustomerEmailMustHaveValidDomainRule(email));
+            CheckRule(new CustomerEmailMustHaveValidDomainRule(emailDomainChecker, email));
 
             return new Customer(email, name);
         }

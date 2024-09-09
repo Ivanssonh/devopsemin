@@ -1,13 +1,12 @@
 ﻿using NSubstitute;
 using SampleProject.Domain.Customers;
 using SampleProject.Domain.Customers.Rules;
-using SampleProject.Domain.SeedWork;
 using SampleProject.UnitTests.SeedWork;
 using Xunit;
 
 namespace SampleProject.UnitTests.Customers
 {
-    
+
     public class CustomerRegistrationTests : TestBase
     {
         [Fact]
@@ -48,14 +47,31 @@ namespace SampleProject.UnitTests.Customers
 
             // Arrange
             var email = "testEmail@test.se";
+            var emailDomainChecker = Substitute.For<IEmailDomainChecker>();
+            emailDomainChecker.IsValidDomain(email).Returns(false);
 
-            // Act & Assert
+            //Assert
             AssertBrokenRule<CustomerEmailMustHaveValidDomainRule>(() =>
-            {
-                Customer.CreateRegistered(email, "Sample Name");
+            {   
+                // Act
+                Customer.CreateRegistered(email, "Sample Name", emailDomainChecker);
             });
         }
+        [Fact]
+        public void GivenCustomerEmailHasValidDomain_WhenCustomerIsRegistering_IsSuccessful()
+        {
+            // Arrange
+            var emailDomainChecker = Substitute.For<IEmailDomainChecker>();
+            const string email = "testEmail@nackademin.se";
+            emailDomainChecker.IsValidDomain(email).Returns(true);
 
-    } 
+            // Act
+            var customer = Customer.CreateRegistered(email, "Sample name", emailDomainChecker);
+
+            // Assert
+            AssertPublishedDomainEvent<CustomerRegisteredEvent>(customer);
+        }
+
+    }
 
 }
