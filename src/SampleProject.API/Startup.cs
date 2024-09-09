@@ -21,6 +21,7 @@ using Serilog;
 using Serilog.Formatting.Compact;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Azure.Core;
 
 [assembly: UserSecretsId("54e8eb06-aaa1-4fff-9f05-3ced1cb623c2")]
 namespace SampleProject.API
@@ -36,8 +37,20 @@ namespace SampleProject.API
             _logger = ConfigureLogger();
             _logger.Information("Logger configured");
 
+            var appSettings = new ConfigurationBuilder()
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true)
+                .AddEnvironmentVariables()
+                .Build();
+
+#if DEBUG
+            TokenCredential credential = new AzureCliCredential();
+#else
+            TokenCredential credential = new ManagedIdentityCredential();
+#endif
+
             this._configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
+                .AddAzureKeyVault(new Uri($"https://{appSettings.GetValue<string>("KeyVaultName")}.vault.azure.net"), credential)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true)
                 .AddUserSecrets<Startup>()
                 .AddEnvironmentVariables()
@@ -66,32 +79,33 @@ namespace SampleProject.API
 
             var children = this._configuration.GetSection("Caching").GetChildren();
             var cachingConfiguration = children.ToDictionary(child => child.Key, child => TimeSpan.Parse(child.Value));
-            
-            
+            var connectionString = this._configuration.GetValue<string>("AKV-ConnectionStringOrders");
+
+
+
             var _emailSettings = _configuration.GetSection("EmailsSettings").Get<EmailsSettings>();
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            
 
-#if DEBUG
-            _emailSettings.FromAddressEmail = "dummy@mail.com";
-#endif
-            if (environment == "Test")
-            {
-            _emailSettings.FromAddressEmail = Environment.GetEnvironmentVariable("FromAddressEmail");
-            }
-            else if (environment == "Prod")
-            {
-            var client = new SecretClient(new Uri("https://kv-devops24-henrik-prod.vault.azure.net/"), new DefaultAzureCredential());
-            KeyVaultSecret secret = client.GetSecret("FromAddressEmailSecret");
-            _emailSettings.FromAddressEmail = secret.Value;
-            }
-            
+
+            //#if DEBUG
+            //            _emailSettings.FromAddressEmail = "dummy@mail.com";
+            //#endif
+            //            if (environment == "Test")
+            //            {
+            //            _emailSettings.FromAddressEmail = Environment.GetEnvironmentVariable("FromAddressEmail");
+            //            }
+            //            else if (environment == "Prod")
+            //            {
+            //            var client = new SecretClient(new Uri("https://kv-devops24-henrik-prod.vault.azure.net/"), new DefaultAzureCredential());
+            //            KeyVaultSecret secret = client.GetSecret("FromAddressEmailSecret");
+            //            _emailSettings.FromAddressEmail = secret.Value;
+            //            }
 
 
             var memoryCache = serviceProvider.GetService<IMemoryCache>();
             return ApplicationStartup.Initialize(
                 services, 
-                this._configuration.GetConnectionString("OrdersConnectionString"),
+                connectionString,
                 new MemoryCacheStore(memoryCache, cachingConfiguration),
                 null,
                 _emailSettings,

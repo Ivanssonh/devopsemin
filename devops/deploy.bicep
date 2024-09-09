@@ -40,7 +40,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
   kind: 'web'
   location: location
   properties: {
-  reserved: false
+    reserved: false
     serverFarmId: appServicePlanWeb.id
     httpsOnly: true
     siteConfig: {
@@ -48,10 +48,26 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
       minTlsVersion: '1.3'
       http20Enabled: true
       netFrameworkVersion: 'v8.0'
+      ipSecurityRestrictions: [
+        {
+          ipAddress: '158.174.49.232/32'
+          action: 'Deny'
+          tag: 'Default'
+          priority: 100
+          name: 'IP block för uppgift 25 devops'
+        }
+        {
+          ipAddress:'84.218.33.158/32'
+          action:'Allow'
+          tag:'Default'
+          priority:100
+          name: 'Henke hemma'
+        }
+      ]
       appSettings: [
         {
-           name: 'ApplicationInsightsAgent_EXTENSION_VERSION'
-           value: '~2'
+          name: 'ApplicationInsightsAgent_EXTENSION_VERSION'
+          value: '~2'
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
@@ -69,8 +85,6 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
   }
 }
 
-
-
 //--------------------------------------------------------------------------------------------------
 //Application insight
 
@@ -82,38 +96,37 @@ resource applicationInsight 'Microsoft.Insights/components@2020-02-02' = {
     Application_Type: 'web'
     Flow_Type: 'Bluefield'
     WorkspaceResourceId: workspace.id
-    IngestionMode:'LogAnaltics'
+    IngestionMode: 'LogAnaltics'
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
   }
 }
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
-  name:workspaceName
-  location:location
+  name: workspaceName
+  location: location
   properties: {
-    sku:{
+    sku: {
       name: 'PerGB2018'
     }
-    retentionInDays:30
-    workspaceCapping:{
+    retentionInDays: 30
+    workspaceCapping: {
       dailyQuotaGb: environmentName == 'test' ? 1 : 2
     }
   }
-
 }
 
 //--------------------------------------------------------------------------------------------------
 //Storage account
 resource StorageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-name: storageAccountName
-location:location
-sku: {name: skuNameST}
-kind: 'StorageV2'
-properties:{
-  minimumTlsVersion:'TLS1_2'
-  supportsHttpsTrafficOnly:true
-}
+  name: storageAccountName
+  location: location
+  sku: { name: skuNameST }
+  kind: 'StorageV2'
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+  }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -122,7 +135,7 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2021-11-01' = {
   parent: sqlServer
   name: sqlDbName
   location: 'Sweden Central'
-  sku: {    
+  sku: {
     name: 'Basic'
     tier: 'Basic'
   }
@@ -130,14 +143,12 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2021-11-01' = {
 
 resource sqlAllowAzureIPs 'Microsoft.Sql/servers/firewallRules@2021-11-01' = {
   name: 'AllowWindowsAzureIps'
-  parent:sqlServer
+  parent: sqlServer
   properties: {
-    startIpAddress:'84.218.33.158'
+    startIpAddress: '84.218.33.158'
     endIpAddress: '84.218.33.158'
   }
-
 }
-
 
 resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = {
   name: sqlServerName
@@ -151,8 +162,6 @@ resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = {
     version: '12.0'
   }
 }
-
-
 
 //--------------------------------------------------------------------------------------------------
 //App service plan & Function app
@@ -172,48 +181,45 @@ resource appServicePlanFunc 'Microsoft.Web/serverfarms@2023-12-01' = {
   }
 }
 
-
 resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
-name:functionAppName
-location: location
-kind:'functionapp'
-properties:{
-  serverFarmId:appServicePlanFunc.id
-  siteConfig:{
-    appSettings:[{
-      name:'AzureWebJobsStorage'
-      value: StorageAccount.properties.primaryEndpoints.blob
+  name: functionAppName
+  location: location
+  kind: 'functionapp'
+  properties: {
+    serverFarmId: appServicePlanFunc.id
+    siteConfig: {
+      appSettings: [
+        {
+          name: 'AzureWebJobsStorage'
+          value: StorageAccount.properties.primaryEndpoints.blob
+        }
+        {
+          name: 'FUNCTIONS_EXTENSION_VERSION'
+          value: '~4'
+        }
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: applicationInsight.properties.InstrumentationKey
+        }
+        {
+          name: 'ApplicationInsightsAgent_EXTENSION_VERSION'
+          value: '~2'
+        }
+      ]
     }
-    {
-      name: 'FUNCTIONS_EXTENSION_VERSION'
-        value: '~4'
-    }
-    {
-      name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-      value: applicationInsight.properties.InstrumentationKey
-    }
-    {
-      name: 'ApplicationInsightsAgent_EXTENSION_VERSION'
-      value: '~2'
-    }
-
-    ]
   }
-
-}
 }
 
 //--------------------------------------------------------------------------------------------------
 //Keyvault
 
-
 module KeyVaultModule 'keyvault.bicep' = {
-  name:'KeyVaultModule'
-  params:{
+  name: 'KeyVaultModule'
+  params: {
     keyVaultName: keyVaultName
-    location:location
+    location: location
     principalId: principalId
-    
+    webAppPrincipalId: webApp.identity.principalId
   }
 }
 
